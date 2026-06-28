@@ -2,5 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
+    println!("Starting main");
     music_visualizer_lib::run()
+    
 }
