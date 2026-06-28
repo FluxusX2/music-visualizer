@@ -3,6 +3,6 @@
 
 fn main() {
     println!("Starting main");
-    music_visualizer_lib::run()
-    
+    music_visualizer_lib::run();
+    println!("Initializing music visualizer");
 }
