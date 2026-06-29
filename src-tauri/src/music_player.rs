@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::SampleRate;
 use hound::{WavReader, SampleFormat};
+use claxon::FlacReader;
 
 pub struct MusicPlayer {
     device: cpal::Device,
@@ -117,10 +118,17 @@ impl MusicPlayer {
     }
 }
 
+/// Gemeinsame Audiodaten-Struktur für WAV und FLAC.
+struct AudioData {
+    samples: Vec<f32>,
+    channels: u16,
+    sample_rate: u32,
+}
+
 /// Reads the content of a .wav file and returns it in f32 format with the spec.
-fn read_samples(path: &str) -> Result<(Vec<f32>, hound::WavSpec), Box<dyn std::error::Error>> {
+fn read_wav(path: &str) -> Result<AudioData, Box<dyn std::error::Error>> {
     let mut reader = WavReader::open(path)
-        .map_err(|e| format!("Datei nicht gefunden: {}", e))?;
+        .map_err(|e| format!("WAV-Datei nicht gefunden: {}", e))?;
     let spec = reader.spec();
 
     let samples: Vec<f32> = match (spec.sample_format, spec.bits_per_sample) {
@@ -148,10 +156,65 @@ fn read_samples(path: &str) -> Result<(Vec<f32>, hound::WavSpec), Box<dyn std::e
         }
     };
 
-    Ok((samples, spec))
+    Ok(AudioData {
+        samples,
+        channels: spec.channels,
+        sample_rate: spec.sample_rate,
+    })
 }
 
-/// Creates a cpal::stream from .wav file.
+/// Reads the content of a .flac file and returns it in f32 format.
+fn read_flac(path: &str) -> Result<AudioData, Box<dyn std::error::Error>> {
+    let mut reader = FlacReader::open(path)
+        .map_err(|e| format!("FLAC-Datei nicht gefunden: {}", e))?;
+    let info = reader.streaminfo();
+    let channels = info.channels as u16;
+    let sample_rate = info.sample_rate;
+    let bits = info.bits_per_sample;
+    let max_val = (1i64 << (bits - 1)) as f32;
+
+    let mut samples: Vec<f32> = Vec::new();
+    let mut blocks = reader.blocks();
+    let mut buf: Vec<i32> = Vec::new();
+    loop {
+        match blocks.read_next_or_eof(buf) {
+            Ok(Some(block)) => {
+                let num_channels = block.channels() as usize;
+                let num_samples = block.duration() as usize;
+                // Kanäle interleaven
+                for i in 0..num_samples {
+                    for ch in 0..num_channels {
+                        let s = block.sample(ch as u32, i as u32);
+                        samples.push(s as f32 / max_val);
+                    }
+                }
+                buf = block.into_buffer();
+            }
+            Ok(None) => break,
+            Err(e) => return Err(format!("FLAC-Lesefehler: {}", e).into()),
+        }
+    }
+
+    Ok(AudioData {
+        samples,
+        channels,
+        sample_rate,
+    })
+}
+
+/// Liest eine Audio-Datei (WAV oder FLAC) anhand der Dateiendung.
+fn read_samples(path: &str) -> Result<AudioData, Box<dyn std::error::Error>> {
+    let lower = path.to_lowercase();
+    if lower.ends_with(".flac") {
+        read_flac(path)
+    } else if lower.ends_with(".wav") {
+        read_wav(path)
+    } else {
+        Err(format!("Nicht unterstütztes Dateiformat: {}", path).into())
+    }
+}
+
+/// Creates a cpal::stream from a .wav or .flac file.
 fn load_stream(
     device: &cpal::Device,
     path: &str,
@@ -159,15 +222,15 @@ fn load_stream(
     volume: Arc<Mutex<f32>>,
 ) -> Result<cpal::Stream, Box<dyn std::error::Error>> {
 
-    let (samples, spec) = read_samples(path)?;
+    let audio = read_samples(path)?;
 
     let config = cpal::StreamConfig {
-        channels: spec.channels,
-        sample_rate: SampleRate(spec.sample_rate),
+        channels: audio.channels,
+        sample_rate: SampleRate(audio.sample_rate),
         buffer_size: cpal::BufferSize::Default,
     };
 
-    let samples = Arc::new(samples);
+    let samples = Arc::new(audio.samples);
     let pos = Arc::new(Mutex::new(0usize));
     let samples_clone = Arc::clone(&samples);
     let pos_clone = Arc::clone(&pos);

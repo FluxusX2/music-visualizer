@@ -61,7 +61,7 @@ fn stop_sound(state: tauri::State<AppState>) -> Result<String, String> {
     }
 }
 
-/// Lists all Songs in the given folder with .wav extension.
+/// Lists all Songs in the given folder with .wav or .flac extension.
 #[tauri::command]
 fn list_files(folder: String) -> Result<Vec<String>, String> {
     let path = std::path::Path::new(&folder);
@@ -72,7 +72,8 @@ fn list_files(folder: String) -> Result<Vec<String>, String> {
         .filter_map(|entry| {
             let entry = entry.ok()?;
             let path = entry.path();
-            if path.extension()?.to_str()? == "wav" {
+            let ext = path.extension()?.to_str()?.to_lowercase();
+            if ext == "wav" || ext == "flac" {
                 Some(path.to_string_lossy().to_string())
             } else {
                 None
