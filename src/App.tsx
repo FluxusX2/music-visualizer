@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import PlayList from "./components/PlayList.tsx";
 import Controls from "./components/Controls.tsx";
 
-const MUSIC_FOLDER = "C:\\Users\\maelb\\Desktop\\music";
+const MUSIC_FOLDER = "../music";
 
 function App() {
   const [isPlaying, setIsPlaying] = useState(false);

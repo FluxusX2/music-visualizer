@@ -65,6 +65,11 @@ fn stop_sound(state: tauri::State<AppState>) -> Result<String, String> {
 #[tauri::command]
 fn list_files(folder: String) -> Result<Vec<String>, String> {
     let path = std::path::Path::new(&folder);
+
+    std::fs::create_dir_all(path)
+        .map_err(|e| format!("Ordner konnte nicht erstellt werden: {}", e))?;
+
+
     let entries = std::fs::read_dir(path)
         .map_err(|e| format!("Ordner nicht lesbar: {}", e))?;
 
