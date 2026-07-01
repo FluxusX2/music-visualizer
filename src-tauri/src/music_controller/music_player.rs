@@ -34,7 +34,7 @@ pub fn play_song(music_controller: &mut MusicController, info: &AudioInfo) {
 
     let target = (info.sample_rate as usize) * (info.channels as usize) * 2;
 
-    // Assert that buffer is full enough (at least 2s of audio).
+    //Assert that buffer is full enough (at least 2s of audio).
     loop {
         let filled = {
             let rb = music_controller.ring_buffer.as_ref().unwrap().lock().unwrap();

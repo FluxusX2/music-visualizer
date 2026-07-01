@@ -16,19 +16,14 @@ pub fn run() {
         .setup(|app| {
             let state = app.state::<AppState>();
             let mut slot = state.player.lock().unwrap();
-
+            
             let mut player = MusicController::new().expect("Failed to create music controller");
             player.add_to_queue(
                 "/Users/mael/RustroverProjects/music-visualizer/music/Gorillaz - Feel Good Inc..flac"
                     .to_string(),
             );
             player.start_song();
-            player.add_to_queue(
-                "/Users/mael/RustroverProjects/music-visualizer/music/Gorillaz - Feel Good Inc..flac"
-                    .to_string(),
-            );
-            player.start_song();
-
+            
             *slot = Some(player);
             Ok(())
         })

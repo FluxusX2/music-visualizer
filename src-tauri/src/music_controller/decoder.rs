@@ -21,8 +21,7 @@ pub fn get_flac_info(path: &Path) -> AudioInfo {
 }
 
 ///Loads the FLAC file and decodes it into a ring buffer for playback.
-pub fn load_flac_into_buffer(path: &Path, rb: Arc<Mutex<ringbuf::HeapRb<f32>>>) {
-    
+pub fn load_flac_into_buffer(path: &Path, rb: Arc<Mutex<HeapRb<f32>>>) {
     let t_path: PathBuf = path.to_path_buf();
 
     std::thread::spawn(move || {
@@ -34,8 +33,9 @@ pub fn load_flac_into_buffer(path: &Path, rb: Arc<Mutex<ringbuf::HeapRb<f32>>>) 
 
             loop {
                 let mut buffer = rb.lock().unwrap();
+
                 if !buffer.is_full() {
-                    buffer.try_push(normalized).ok();
+                    buffer.try_push(normalized).expect("Failed to push sample");
                     break;
                 }
                 drop(buffer);

@@ -1,9 +1,8 @@
 use std::sync::{Arc, Mutex};
 use std::collections::VecDeque;
 use std::path::Path;
-use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use ringbuf::traits::Consumer;
-use crate::music_controller::decoder::AudioInfo;
+use cpal::traits::{HostTrait, StreamTrait};
+use crate::music_controller::decoder::{load_flac_into_buffer, AudioInfo};
 
 mod music_parameters;
 mod decoder;
@@ -39,7 +38,7 @@ impl MusicController {
             stream: None,
             queue: VecDeque::new(),
             parameters: music_parameters::MusicParameters::new(),
-            ring_buffer: None, // 10 Sekunden Puffer
+            ring_buffer: None,
         })
     }
 
@@ -47,6 +46,7 @@ impl MusicController {
         let path_str = self.queue.pop_front().unwrap();
         let path = Path::new(&path_str);
         let info = self.load_song(path);
+        self.load_song(path);
         self.play_song(&info);
 
     }
@@ -71,6 +71,12 @@ impl MusicController {
         }
         if Path::new(&path_str).is_file() {
             self.queue.push_back(path_str);
+        }
+    }
+
+    fn toggle_song_playback(&mut self) {
+        if let Some(stream) = &self.stream {
+            self.parameters.toggle_song_playback(stream);
         }
     }
 
