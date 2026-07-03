@@ -68,7 +68,8 @@ impl MusicController {
                                        rb,
                                        info.sample_rate,
                                        target_sample_rate,
-                                       info.channels);
+                                       info.channels,
+                                       info.bits_per_sample);
         info
     }
 

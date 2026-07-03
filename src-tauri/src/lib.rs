@@ -19,7 +19,7 @@ pub fn run() {
             
             let mut player = MusicController::new().expect("Failed to create music controller");
             player.add_to_queue(
-                "/Users/mael/RustroverProjects/music-visualizer/music/Gorillaz - Feel Good Inc..flac"
+                "../music/Mr_Brightside.flac"
                     .to_string(),
             );
             player.start_song();

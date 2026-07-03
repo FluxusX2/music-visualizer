@@ -26,7 +26,8 @@ pub fn load_flac_into_buffer(path: &Path,
                              rb: Arc<Mutex<HeapRb<f32>>>,
                              source_sr: u32,
                              target_sr: u32,
-                             channels: u32) {
+                             channels: u32, 
+                             bits_per_sample: u32) {
     let t_path: PathBuf = path.to_path_buf();
 
     std::thread::spawn(move || {
@@ -40,7 +41,7 @@ pub fn load_flac_into_buffer(path: &Path,
 
         for sample in reader.samples() {
             let sample = sample.expect("Failed to read sample");
-            let normalized = (sample as f32) / (i16::MAX as f32);
+            let normalized = (sample as f32) / ((1 << (bits_per_sample - 1)) as f32);
 
             if need_resampling {
                 resample_and_push_to_buffer(&mut input_buffers,
@@ -78,12 +79,12 @@ pub fn load_flac_into_buffer(path: &Path,
     });
 }
 
-fn push_to_rb(normalized: f32, rb: Arc<Mutex<HeapRb<f32>>>) {
+fn push_to_rb(sample: f32, rb: Arc<Mutex<HeapRb<f32>>>) {
     loop {
         let mut buffer = rb.lock().unwrap();
 
         if !buffer.is_full() {
-            buffer.try_push(normalized).expect("Failed to push sample");
+            buffer.try_push(sample).expect("Failed to push sample");
             break;
         }
         drop(buffer);
