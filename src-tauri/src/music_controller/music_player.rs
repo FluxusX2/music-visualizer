@@ -8,16 +8,20 @@ use crate::music_controller::MusicController;
 
 pub fn play_song(music_controller: &mut MusicController, info: &AudioInfo) {
 
+    let target_sr = music_controller.device.default_output_config()
+        .expect("No default config")
+        .sample_rate()
+        .0;
+
     let config = cpal::StreamConfig {
         channels: info.channels as cpal::ChannelCount,
-        sample_rate: SampleRate(info.sample_rate),
+        sample_rate: cpal::SampleRate(target_sr),
         buffer_size: cpal::BufferSize::Default,
     };
 
     let err_fn = |err| eprintln!("An error occurred on the output audio stream: {}", err);
-
-    let rb = std::sync::Arc::clone(&music_controller.ring_buffer.as_ref().unwrap());
-    let vol = Arc::clone(&music_controller.parameters.volume);
+    let rb = std::sync::Arc::clone(music_controller.ring_buffer.as_ref().unwrap());
+    let vol = std::sync::Arc::clone(&music_controller.parameters.volume);
 
     let stream = music_controller.device.build_output_stream(
         &config,
@@ -30,7 +34,7 @@ pub fn play_song(music_controller: &mut MusicController, info: &AudioInfo) {
         },
         err_fn,
         None,
-    ).unwrap();
+    ).expect("Device does not support this channel configuration");
 
     let target = (info.sample_rate as usize) * (info.channels as usize) * 2;
 

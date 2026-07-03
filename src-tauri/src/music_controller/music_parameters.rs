@@ -32,5 +32,4 @@ impl MusicParameters {
             self.is_paused = true;
         }
     }
-
 }
