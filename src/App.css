@@ -1,3 +1,14 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Optional but highly recommended: makes padding and borders behave predictably */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
@@ -5,12 +16,101 @@
   line-height: 24px;
   font-weight: 400;
 
+  padding: 0;
+  margin: 0;
+
   color: #0f0f0f;
-  background-color: #f6f6f6;
+  background: #121212;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  --color-bg: #121212;
+
+  /* Lighter shades for elevated surfaces / cards */
+  --color-bg-elevated-1: color-mix(in srgb, var(--color-bg), white 4%);
+  --color-bg-elevated-2: color-mix(in srgb, var(--color-bg), white 8%);
+  --color-bg-elevated-3: color-mix(in srgb, var(--color-bg), white 12%);
+
+  /* Darker shade (pure black) */
+  --color-bg-dark: color-mix(in srgb, var(--color-bg), black 50%);
+
+  --color-primary: #cecece;
+
+  --color-primary-elevated-1: color-mix(in srgb, var(--color-primary), black 15%);
+  --color-primary-elevated-2: color-mix(in srgb, var(--color-primary), black 30%);
+  --color-primary-elevated-3: color-mix(in srgb, var(--color-primary), black 45%);
+}
+
+.container {
+  height: 100vh;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: minmax(300px, 20%) 1fr;
+  grid-template-rows: 1fr 50px;
+  gap: 8px;
+  grid-template-areas:
+    "playlist content"
+    "playlist control-bar";
+}
+.playlist {
+  grid-area: playlist;
+  background: var(--color-bg-elevated-1);
+  border-radius: 16px;
+  padding: 8px;
+}
+
+.playlist ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.control-bar {
+  grid-area: control-bar;
+  background: var(--color-bg-elevated-1);
+  border-radius: 16px;
+  padding: 8px;
+
+}
+.content {
+  grid-area: content;
+}
+
+button {
+  all: unset;
+}
+
+button:focus {
+
+}
+
+.icons {
+  color: var(--color-primary);
+  stroke-width: 2;
+  height: 24px;
+  width: 24px;
+}
+
+.icons:hover {
+  cursor: pointer;
+  color: var(--color-primary-elevated-1);
+}
+
+
+.icons:active {
+  color: var(--color-primary-elevated-2);
+}
+
+.playlist-card {
+  color: var(--color-primary);
+  width: 100%;
+  padding: 2px 4px;
+}
+
+.playlist-card:hover {
+  color: var(--color-primary-elevated-1);
 }

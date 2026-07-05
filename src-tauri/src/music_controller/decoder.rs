@@ -1,8 +1,10 @@
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Sender;
 use std::thread::yield_now;
 use claxon::FlacReader;
-use ringbuf::{traits::*, HeapRb};
+use ringbuf::{traits::*, HeapRb, SharedRb};
+use ringbuf::storage::Heap;
 use rubato::{Resampler, SincFixedIn, SincInterpolationParameters, SincInterpolationType, WindowFunction};
 
 pub struct AudioInfo {
@@ -23,11 +25,13 @@ pub fn get_flac_info(path: &Path) -> AudioInfo {
 
 ///Loads the FLAC file and decodes it into a ring buffer for playback.
 pub fn load_flac_into_buffer(path: &Path,
-                             rb: Arc<Mutex<HeapRb<f32>>>,
+                             rb: Arc<Mutex<SharedRb<Heap<f32>>>>,
                              source_sr: u32,
                              target_sr: u32,
-                             channels: u32, 
-                             bits_per_sample: u32) {
+                             channels: u32,
+                             bits_per_sample: u32,
+                             tx: Sender<()>
+) {
     let t_path: PathBuf = path.to_path_buf();
 
     std::thread::spawn(move || {
@@ -76,12 +80,19 @@ pub fn load_flac_into_buffer(path: &Path,
                 }
             }
         }
+
+        while !rb.lock().unwrap().is_empty() {
+            yield_now();
+        }
+
+        tx.send(()).unwrap();
     });
 }
 
 fn push_to_rb(sample: f32, rb: Arc<Mutex<HeapRb<f32>>>) {
     loop {
         let mut buffer = rb.lock().unwrap();
+
 
         if !buffer.is_full() {
             buffer.try_push(sample).expect("Failed to push sample");

@@ -1,6 +1,4 @@
-use std::sync::{Arc};
 use std::thread::yield_now;
-use cpal::SampleRate;
 use cpal::traits::{DeviceTrait, StreamTrait};
 use ringbuf::traits::*;
 use crate::music_controller::decoder::AudioInfo;

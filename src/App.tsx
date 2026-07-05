@@ -1,4 +1,6 @@
 import "./App.css";
+import ControlBar from "./components/ControlBar";
+import PlayList from "./components/PlayList.tsx";
 
 function App() {
 
@@ -6,12 +8,11 @@ function App() {
 
   return (
     <main className="container">
+        <ControlBar/>
+        <PlayList/>
+        <div className={"content"}>
 
-      <div>
-        <button onClick={() => {}}>
-          Play / Resume
-        </button>
-      </div>
+        </div>
     </main>
   );
 }
