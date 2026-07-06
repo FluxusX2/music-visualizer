@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 use std::path::Path;
 use std::sync::mpsc::channel;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use tauri::{AppHandle, Emitter};
 use crate::music_controller::decoder::{AudioInfo};
 
 mod music_parameters;
@@ -10,6 +11,7 @@ mod decoder;
 mod music_player;
 
 pub struct MusicController {
+    app_handle: AppHandle,
     device: cpal::Device,
     stream: Option<cpal::Stream>,
     pub queue: VecDeque<String>,
@@ -25,7 +27,7 @@ unsafe impl Sync for MusicController {}
 
 impl MusicController {
     ///Connstructor for MusicPlayer
-    pub fn new() -> Result<(Self, mpsc::Receiver<()>), Box<dyn std::error::Error>> {
+    pub fn new(app_handle: AppHandle) -> Result<(Self, mpsc::Receiver<()>), Box<dyn std::error::Error>> {
         let host = cpal::default_host();
         let device = host
             .default_output_device()
@@ -34,6 +36,7 @@ impl MusicController {
         let (tx, rx) = channel::<()>();
 
         let controller = MusicController {
+            app_handle,
             device,
             stream: None,
             queue: VecDeque::new(),
@@ -94,6 +97,7 @@ impl MusicController {
     pub fn toggle_playback(&mut self) {
         if let Some(stream) = &self.stream {
             self.parameters.toggle_song_playback(stream);
+            self.emit_playback_state();
         }
     }
 
@@ -104,6 +108,10 @@ impl MusicController {
             self.ring_buffer = None;
             if !self.queue.is_empty() {
                 self.start_song();
+            } else {
+                self.parameters.is_paused = true;
+                self.stream = None;
+                self.emit_playback_state();
             }
         }
     }
@@ -116,6 +124,12 @@ impl MusicController {
             }
             self.ring_buffer = None;
             self.start_song();
+        }
+    }
+
+    pub fn emit_playback_state(&self) {
+        if let Err(err) = self.app_handle.emit("playback-state", self.parameters.is_paused) {
+            eprintln!("Failed to emit playback state: {}", err);
         }
     }
 

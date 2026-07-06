@@ -12,7 +12,7 @@ impl MusicParameters {
     pub fn new() -> MusicParameters {
         MusicParameters {
             volume: Arc::new(Mutex::new(0.25)),
-            is_paused: false,
+            is_paused: true,
             time_step: 0.0,
         }
     }

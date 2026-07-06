@@ -50,8 +50,11 @@ pub fn play_song(music_controller: &mut MusicController, info: &AudioInfo) {
         }
         yield_now();
     }
-
+    
     stream.play().expect("Failed to play the stream");
-   music_controller.stream = Some(stream);
+    
+    music_controller.stream = Some(stream);
+    music_controller.parameters.is_paused = false;
+    music_controller.emit_playback_state();
 
 }

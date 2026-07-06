@@ -1,10 +1,26 @@
 import {invoke} from "@tauri-apps/api/core";
-import {useState} from "react";
+import {listen} from "@tauri-apps/api/event";
+import {useEffect, useState} from "react";
 import { Play, Pause, SkipForward, SkipBack } from "lucide-react";
 
 function ControlBar() {
-    // Audio starts playing automatically on launch, so we begin in "playing" state.
-    const [isPaused, setIsPaused] = useState(false);
+    const [isPaused, setIsPaused] = useState(true);
+
+    useEffect(() => {
+        let unlisten: (() => void) | undefined;
+
+        listen<boolean>("playback-state", (event) => {
+            setIsPaused(event.payload);
+        }).then((fn) => {
+            unlisten = fn;
+        });
+
+        return () => {
+            if (unlisten) {
+                unlisten();
+            }
+        };
+    }, []);
 
     function toggle_playback() {
         invoke<boolean>("toggle_playback")
@@ -38,4 +54,3 @@ function ControlBar() {
 }
 
 export default ControlBar;
-

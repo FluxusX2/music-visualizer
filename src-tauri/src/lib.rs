@@ -19,7 +19,7 @@ pub fn run() {
             let state = app.state::<AppState>();
             let mut slot = state.player.lock().unwrap();
 
-            let (player, rx) = MusicController::new().expect("Failed to create music controller");
+            let (player, rx) = MusicController::new(app.handle().clone()).expect("Failed to create music controller");
 
             *slot = Some(player);
             drop(slot);

@@ -73,15 +73,21 @@ html, body {
   grid-area: control-bar;
   background: var(--color-bg-elevated-1);
   border-radius: 16px;
-  padding: 8px;
-
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
 .content {
   grid-area: content;
 }
 
 button {
   all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 button:focus {
@@ -91,18 +97,21 @@ button:focus {
 .icons {
   color: var(--color-primary);
   stroke-width: 2;
-  height: 24px;
-  width: 24px;
+  height: 20px;
+  width: 20px;
+  fill: var(--color-primary);
 }
 
 .icons:hover {
   cursor: pointer;
   color: var(--color-primary-elevated-1);
+  fill: var(--color-primary-elevated-1);
 }
 
 
 .icons:active {
   color: var(--color-primary-elevated-2);
+  fill: var(--color-primary-elevated-2);
 }
 
 .playlist-card {
@@ -113,4 +122,25 @@ button:focus {
 
 .playlist-card:hover {
   color: var(--color-primary-elevated-1);
+}
+
+.play-button {
+  background: var(--color-primary);
+  width: 32px;
+  height: 32px;
+  border-radius: 18px;
+}
+
+.play-button:hover {
+  background: var(--color-primary-elevated-1);
+}
+
+.play-button .icons {
+  color: var(--color-bg);
+  fill: var(--color-bg);
+}
+
+.play-button:hover .icons:hover {
+  color: var(--color-bg-elevated-1);
+  fill: var(--color-bg-elevated-1);
 }
