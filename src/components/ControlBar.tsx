@@ -12,15 +12,25 @@ function ControlBar() {
             .catch(e => console.error("toggle_playback failed:", e));
     }
 
+    function skip_forward() {
+        invoke("skip_forward")
+            .catch(e => console.error("skip_forward failed:", e));
+    }
+
+    function skip_backward() {
+        invoke("skip_backward")
+            .catch(e => console.error("skip_backward failed:", e));
+    }
+
     return (
         <div className={"control-bar"}>
-            <button>
+            <button onClick={skip_backward}>
                 <SkipBack className={"icons"}/>
             </button>
             <button className={"play-button"} onClick={toggle_playback}>
                 {isPaused ? <Play className={"icons"}/> : <Pause className={"icons"}/>}
             </button>
-            <button>
+            <button onClick={skip_forward}>
                 <SkipForward className={"icons"}/>
             </button>
         </div>

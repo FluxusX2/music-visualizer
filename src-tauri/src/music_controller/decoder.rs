@@ -18,8 +18,8 @@ pub fn get_flac_info(path: &Path) -> AudioInfo {
     let stream_info = reader.streaminfo();
     AudioInfo {
         sample_rate: stream_info.sample_rate,
-        channels: stream_info.channels as u32,
-        bits_per_sample: stream_info.bits_per_sample as u32,
+        channels: stream_info.channels,
+        bits_per_sample: stream_info.bits_per_sample,
     }
 }
 
@@ -36,7 +36,7 @@ pub fn load_flac_into_buffer(path: &Path,
 
     std::thread::spawn(move || {
         let mut reader = FlacReader::open(t_path).unwrap();
-
+        
         let need_resampling = source_sr != target_sr;
         let chunk_size = 1024;
         let mut input_buffers = vec![Vec::<f32>::with_capacity(chunk_size); channels as usize];
@@ -106,8 +106,7 @@ fn push_to_rb(sample: f32, rb: Arc<Mutex<HeapRb<f32>>>) {
 fn create_resampler(target_sr: u32, source_sr: u32, channels: u32) -> Option<SincFixedIn<f32>> {
     let chunk_size = 1024;
 
-    // 1. Configure the resampler if needed
-    let mut resampler = {
+    let resampler = {
         let params = SincInterpolationParameters {
             sinc_len: 256,
             f_cutoff: 0.95,

@@ -2,7 +2,7 @@ use std::sync::{mpsc, Arc, Mutex};
 use std::collections::VecDeque;
 use std::path::Path;
 use std::sync::mpsc::channel;
-use cpal::traits::{DeviceTrait, HostTrait};
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use crate::music_controller::decoder::{AudioInfo};
 
 mod music_parameters;
@@ -10,20 +10,15 @@ mod decoder;
 mod music_player;
 
 pub struct MusicController {
-    host: cpal::Host,
     device: cpal::Device,
     stream: Option<cpal::Stream>,
     pub queue: VecDeque<String>,
+    pub previous_song_stack: Vec<String>,
     pub parameters: music_parameters::MusicParameters,
     pub ring_buffer: Option<Arc<Mutex<ringbuf::HeapRb<f32>>>>,
-    pub sample_rate: u32,
-    pub channels: u32,
     pub queue_tx: mpsc::Sender<()>,
 }
 
-// cpal::Device und cpal::Stream auf Windows (WASAPI) implementieren Send nicht,
-// aber MusicPlayer lebt in einem Mutex<Option<MusicPlayer>> in AppState und
-// wird nur sequentiell über Tauri-Commands zugegriffen.
 unsafe impl Send for MusicController {}
 unsafe impl Sync for MusicController {}
 
@@ -35,17 +30,16 @@ impl MusicController {
         let device = host
             .default_output_device()
             .ok_or("Kein Ausgabegerät gefunden")?;
-        let sample_rate = device.default_output_config()?.sample_rate().0;
-        let channels = device.default_output_config()?.channels() as u32;
 
         let (tx, rx) = channel::<()>();
 
         let controller = MusicController {
-            host, device, stream: None,
+            device,
+            stream: None,
             queue: VecDeque::new(),
+            previous_song_stack: Vec::new(),
             parameters: music_parameters::MusicParameters::new(),
             ring_buffer: None,
-            sample_rate, channels,
             queue_tx: tx,
         };
 
@@ -103,13 +97,35 @@ impl MusicController {
         }
     }
 
+    pub fn skip_forward(&mut self) {
+        if let Some(stream) = &self.stream {
+            self.previous_song_stack.push(self.queue.pop_front().expect("Queue should not be empty"));
+            stream.pause().expect("Failed to pause stream or stream does not exist.");
+            self.ring_buffer = None;
+            if !self.queue.is_empty() {
+                self.start_song();
+            }
+        }
+    }
+
+    pub fn skip_backward(&mut self) {
+        if !self.previous_song_stack.is_empty() {
+            self.queue.push_front(self.previous_song_stack.pop().unwrap());
+            if let Some(stream) = &self.stream {
+                stream.pause().expect("Failed to pause stream or stream does not exist.");
+            }
+            self.ring_buffer = None;
+            self.start_song();
+        }
+    }
+
     pub fn create_queue_thread(shared: Arc<Mutex<Option<MusicController>>>,
                                rx: mpsc::Receiver<()>,) {
         std::thread::spawn(move || {
             while rx.recv().is_ok() {
                 let mut guard = shared.lock().unwrap();
                 if let Some(player) = guard.as_mut() {
-                    player.queue.pop_front();
+                    player.previous_song_stack.push(player.queue.pop_front().expect("Queue should not be empty"));
                     if !player.queue.is_empty() {
                         player.start_song();
                     }
