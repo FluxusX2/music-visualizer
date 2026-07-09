@@ -2,6 +2,7 @@ import {invoke} from "@tauri-apps/api/core";
 import {listen} from "@tauri-apps/api/event";
 import {useEffect, useState} from "react";
 import { Play, Pause, SkipForward, SkipBack } from "lucide-react";
+import {Slider} from "@mui/material";
 
 function ControlBar() {
     const [isPaused, setIsPaused] = useState(true);
@@ -49,6 +50,7 @@ function ControlBar() {
             <button onClick={skip_forward}>
                 <SkipForward className={"icons"}/>
             </button>
+            <Slider></Slider>
         </div>
     );
 }

@@ -131,10 +131,6 @@ button:focus {
   border-radius: 18px;
 }
 
-.play-button:hover {
-  background: var(--color-primary-elevated-1);
-}
-
 .play-button .icons {
   color: var(--color-bg);
   fill: var(--color-bg);
