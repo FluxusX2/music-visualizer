@@ -39,6 +39,11 @@ function ControlBar() {
             .catch(e => console.error("skip_backward failed:", e));
     }
 
+    function handleVolumeChange(_event: any, newValue: number) {
+        invoke("set_volume", { volume: newValue })
+            .catch(e => console.error("set_volume failed:", e));
+    }
+
     return (
         <div className={"control-bar"}>
             <button onClick={skip_backward}>
@@ -50,7 +55,8 @@ function ControlBar() {
             <button onClick={skip_forward}>
                 <SkipForward className={"icons"}/>
             </button>
-            <Slider></Slider>
+            <Slider valueLabelDisplay={"auto"}/>
+            <Slider orientation={"vertical"} valueLabelDisplay={"auto"} onChange={handleVolumeChange}/>
         </div>
     );
 }

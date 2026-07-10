@@ -132,6 +132,10 @@ impl MusicController {
             eprintln!("Failed to emit playback state: {}", err);
         }
     }
+    
+    pub fn set_volume(&mut self, new_volume: f32) {
+        self.parameters.set_volume(new_volume);
+    }
 
     pub fn create_queue_thread(shared: Arc<Mutex<Option<MusicController>>>,
                                rx: mpsc::Receiver<()>,) {
