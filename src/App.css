@@ -43,6 +43,11 @@ html, body {
   --color-primary-elevated-1: color-mix(in srgb, var(--color-primary), black 15%);
   --color-primary-elevated-2: color-mix(in srgb, var(--color-primary), black 30%);
   --color-primary-elevated-3: color-mix(in srgb, var(--color-primary), black 45%);
+
+  --color-secondary: #7B1FA2;
+  --color-secondary-elevated-1: #8b23b7;
+  --color-secondary-elevated-2: #9c27cd;
+  --color-secondary-elevated-3: #a835d8;
 }
 
 .container {
@@ -61,6 +66,17 @@ html, body {
   background: var(--color-bg-elevated-1);
   border-radius: 16px;
   padding: 8px;
+}
+
+.playlist button {
+  margin: 0;
+  padding: 0;
+  display: inline;
+  border-radius: 8px;
+}
+
+.playlist button:hover {
+  background: var(--color-bg-elevated-2);
 }
 
 .playlist ul {
@@ -139,4 +155,60 @@ button:focus {
 .play-button:hover .icons:hover {
   color: var(--color-bg-elevated-1);
   fill: var(--color-bg-elevated-1);
+}
+
+.progress-bar {
+  flex: 1;
+  color: var(--color-primary);
+}
+
+.volume-slider {
+  min-width: 50px;
+  max-width: 75px;
+  color: var(--color-primary);
+}
+
+.MuiSlider-thumb {
+  box-shadow: none !important;
+
+}
+
+.progress-bar .MuiSlider-track,
+.volume-slider .MuiSlider-track {
+  color: var(--color-primary);
+}
+
+.progress-bar .MuiSlider-rail,
+.volume-slider .MuiSlider-rail {
+  color: var(--color-primary-elevated-3);
+}
+
+.progress-bar .MuiSlider-thumb,
+.volume-slider .MuiSlider-thumb {
+  box-shadow: none;
+  color: var(--color-secondary);
+  height: 8px;
+  width: 8px;
+}
+
+.progress-bar .MuiSlider-thumb:hover,
+.volume-slider .MuiSlider-thumb:hover {
+  box-shadow: none;
+  color: var(--color-secondary-elevated-1);
+  height: 12px;
+  width: 12px;
+}
+
+.progress-bar .MuiSlider-thumb:active,
+.volume-slider .MuiSlider-thumb:active {
+  box-shadow: none;
+  color: var(--color-secondary-elevated-2);
+  height: 12px;
+  width: 12px;
+}
+
+.progress-bar .MuiSlider-valueLabel,
+.volume-slider .MuiSlider-valueLabel {
+  background: var(--color-bg-elevated-3);
+  color: var(--color-primary);
 }

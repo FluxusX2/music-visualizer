@@ -40,7 +40,7 @@ function ControlBar() {
     }
 
     function handleVolumeChange(_event: any, newValue: number) {
-        invoke("set_volume", { volume: newValue })
+        invoke("set_volume", { volume: (newValue / 100) })
             .catch(e => console.error("set_volume failed:", e));
     }
 
@@ -55,8 +55,14 @@ function ControlBar() {
             <button onClick={skip_forward}>
                 <SkipForward className={"icons"}/>
             </button>
-            <Slider valueLabelDisplay={"auto"}/>
-            <Slider orientation={"vertical"} valueLabelDisplay={"auto"} onChange={handleVolumeChange}/>
+            <Slider valueLabelDisplay={"auto"}
+                    className={"progress-bar"}
+            />
+            <Slider orientation={"horizontal"}
+                    valueLabelDisplay={"auto"}
+                    onChange={handleVolumeChange}
+                    defaultValue={50}
+                    className={"volume-slider"}/>
         </div>
     );
 }
