@@ -4,6 +4,7 @@ mod library_controller;
 use std::sync::{Arc, Mutex};
 use tauri::{Manager, State};
 use music_controller::MusicController;
+use crate::library_controller::SongInfo;
 
 pub struct AppState {
     player: Arc<Mutex<Option<MusicController>>>,
@@ -25,6 +26,7 @@ pub fn run() {
             drop(slot);
 
             MusicController::create_queue_thread(state.player.clone(), rx);
+            MusicController::create_progress_thread(state.player.clone());
 
             Ok(())
         })
@@ -36,6 +38,7 @@ pub fn run() {
             skip_forward,
             skip_backward,
             set_volume,
+            seek,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -80,8 +83,8 @@ fn skip_backward(state: State<'_, AppState>) -> Result<String, String> {
 }
 
 #[tauri::command]
-fn scan_dir(dir_str: String) -> Result<Vec<Vec<String>>, String> {
-    library_controller::scan_dir(dir_str).map_err(|e| e.to_string())
+fn scan_dir(dir_str: String) -> Result<Vec<SongInfo>, String> {
+    library_controller::scan_dir(&*dir_str).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -89,5 +92,13 @@ fn set_volume(state: State<'_, AppState>, volume: f32) -> Result<(), String> {
     let mut guard = state.player.lock().map_err(|e| e.to_string())?;
     let player = guard.as_mut().ok_or_else(|| "Player not initialised".to_string())?;
     player.set_volume(volume);
+    Ok(())
+}
+
+#[tauri::command]
+fn seek(state: State<'_, AppState>, position_secs: f64) -> Result<(), String> {
+    let mut guard = state.player.lock().map_err(|e| e.to_string())?;
+    let player = guard.as_mut().ok_or_else(|| "Player not initialised".to_string())?;
+    player.seek(position_secs);
     Ok(())
 }

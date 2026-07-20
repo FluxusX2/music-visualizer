@@ -10,6 +10,12 @@ mod music_parameters;
 mod decoder;
 mod music_player;
 
+#[derive(serde::Serialize, Clone)]
+pub struct PlaybackProgress {
+    pub position: f64,
+    pub duration: f64,
+}
+
 pub struct MusicController {
     app_handle: AppHandle,
     device: cpal::Device,
@@ -50,14 +56,31 @@ impl MusicController {
     }
 
     pub fn start_song(&mut self) {
-        let path_str = self.queue.get(0).unwrap().clone();
+        let path_str = self.queue.front().unwrap().clone();
         let path = Path::new(&path_str);
-        let info = self.load_song(path);
+        let info = self.load_song(path, 0.0);
         self.play_song(&info);
     }
 
-    fn load_song(&mut self, path: &Path) -> AudioInfo {
-        let info = decoder::get_flac_info(path);
+    /// Seeks the current song to `position_secs` by restarting decoding from that position.
+    pub fn seek(&mut self, position_secs: f64) {
+        if self.queue.is_empty() {
+            return;
+        }
+        if let Some(stream) = &self.stream {
+            stream.pause().expect("Failed to pause stream or stream does not exist.");
+        }
+        self.ring_buffer = None;
+
+        let path_str = self.queue.front().unwrap().clone();
+        let path = Path::new(&path_str);
+        let clamped = position_secs.max(0.0);
+        let info = self.load_song(path, clamped);
+        self.play_song(&info);
+    }
+
+    fn load_song(&mut self, path: &Path, start_position_secs: f64) -> AudioInfo {
+        let info = decoder::get_audio_info(path);
         let target_sample_rate = self.device.default_output_config().unwrap().sample_rate().0;
 
         let rb = Arc::new(Mutex::new(ringbuf::HeapRb::new(
@@ -65,12 +88,20 @@ impl MusicController {
         )));
         self.ring_buffer = Some(rb.clone());
 
-        decoder::load_flac_into_buffer(path,
-                                       rb.clone(),
+        let duration_secs = info.total_frames
+            .map(|frames| frames as f64 / info.sample_rate as f64)
+            .unwrap_or(0.0);
+
+        let skip_frames = (start_position_secs * info.sample_rate as f64).round() as u64;
+        let start_frame_target = (start_position_secs * target_sample_rate as f64).round() as u64;
+        self.parameters.reset_position(target_sample_rate, duration_secs, start_frame_target);
+
+        decoder::load_audio_into_buffer(path,
+                                       rb,
                                        info.sample_rate,
                                        target_sample_rate,
                                        info.channels,
-                                       info.bits_per_sample,
+                                       skip_frames,
                                        self.queue_tx.clone()
         );
         info
@@ -132,6 +163,16 @@ impl MusicController {
             eprintln!("Failed to emit playback state: {}", err);
         }
     }
+
+    pub fn emit_progress(&self) {
+        let progress = PlaybackProgress {
+            position: self.parameters.position_secs(),
+            duration: self.parameters.duration_secs,
+        };
+        if let Err(err) = self.app_handle.emit("playback-progress", progress) {
+            eprintln!("Failed to emit playback progress: {}", err);
+        }
+    }
     
     pub fn set_volume(&mut self, new_volume: f32) {
         self.parameters.set_volume(new_volume);
@@ -146,6 +187,22 @@ impl MusicController {
                     player.previous_song_stack.push(player.queue.pop_front().expect("Queue should not be empty"));
                     if !player.queue.is_empty() {
                         player.start_song();
+                    }
+                }
+            }
+        });
+    }
+
+    /// Periodically emits the current playback position/duration so the frontend progress bar
+    /// can stay in sync without polling.
+    pub fn create_progress_thread(shared: Arc<Mutex<Option<MusicController>>>) {
+        std::thread::spawn(move || {
+            loop {
+                std::thread::sleep(std::time::Duration::from_millis(200));
+                let guard = shared.lock().unwrap();
+                if let Some(player) = guard.as_ref() {
+                    if !player.parameters.is_paused {
+                        player.emit_progress();
                     }
                 }
             }

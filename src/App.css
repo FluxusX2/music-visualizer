@@ -61,53 +61,12 @@ html, body {
     "playlist content"
     "playlist control-bar";
 }
-.playlist {
-  grid-area: playlist;
-  background: var(--color-bg-elevated-1);
-  border-radius: 16px;
-  padding: 8px;
-}
-
-.playlist button {
-  margin: 0;
-  padding: 0;
-  display: inline;
-  border-radius: 8px;
-}
-
-.playlist button:hover {
-  background: var(--color-bg-elevated-2);
-}
-
-.playlist ul {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-}
-
-.control-bar {
-  grid-area: control-bar;
-  background: var(--color-bg-elevated-1);
-  border-radius: 16px;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.content {
-  grid-area: content;
-}
 
 button {
   all: unset;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-button:focus {
-
 }
 
 .icons {
@@ -130,14 +89,65 @@ button:focus {
   fill: var(--color-primary-elevated-2);
 }
 
+/* Playlist Style */
+
+.playlist {
+  grid-area: playlist;
+  background: var(--color-bg-elevated-1);
+  border-radius: 16px;
+  padding: 8px;
+  overflow: scroll;
+}
+
+.playlist button {
+  margin: 0;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.playlist button:hover {
+  background: var(--color-bg-elevated-2);
+  cursor: pointer;
+}
+
+.playlist ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
 .playlist-card {
   color: var(--color-primary);
   width: 100%;
-  padding: 2px 4px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  text-align: left;
 }
 
 .playlist-card:hover {
   color: var(--color-primary-elevated-1);
+}
+
+/* Control Bar Style */
+
+.control-bar {
+  grid-area: control-bar;
+  background: var(--color-bg-elevated-1);
+  border-radius: 16px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .play-button {
@@ -211,4 +221,19 @@ button:focus {
 .volume-slider .MuiSlider-valueLabel {
   background: var(--color-bg-elevated-3);
   color: var(--color-primary);
+}
+
+/*Content Style*/
+
+.content {
+  grid-area: content;
+  background: var(--color-bg-elevated-1);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.content-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
 }

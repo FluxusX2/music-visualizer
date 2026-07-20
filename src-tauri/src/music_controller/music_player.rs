@@ -1,4 +1,5 @@
 use std::thread::yield_now;
+use std::sync::atomic::Ordering;
 use cpal::traits::{DeviceTrait, StreamTrait};
 use ringbuf::traits::*;
 use crate::music_controller::decoder::AudioInfo;
@@ -20,6 +21,8 @@ pub fn play_song(music_controller: &mut MusicController, info: &AudioInfo) {
     let err_fn = |err| eprintln!("An error occurred on the output audio stream: {}", err);
     let rb = std::sync::Arc::clone(music_controller.ring_buffer.as_ref().unwrap());
     let vol = std::sync::Arc::clone(&music_controller.parameters.volume);
+    let played_frames = std::sync::Arc::clone(&music_controller.parameters.played_frames);
+    let channels = info.channels as u64;
 
     let stream = music_controller.device.build_output_stream(
         &config,
@@ -29,6 +32,8 @@ pub fn play_song(music_controller: &mut MusicController, info: &AudioInfo) {
             for sample in data.iter_mut() {
                 *sample = buffer.try_pop().unwrap_or(0.0) * vol;
             }
+            drop(buffer);
+            played_frames.fetch_add(data.len() as u64 / channels, Ordering::Relaxed);
         },
         err_fn,
         None,

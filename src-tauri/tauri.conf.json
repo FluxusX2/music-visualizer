@@ -15,7 +15,7 @@
         "title": "music-visualizer",
         "width": 800,
         "height": 600,
-        "decorations": false,
+        "decorations": true,
         "minWidth": 800,
         "minHeight": 600,
         "resizable": true
