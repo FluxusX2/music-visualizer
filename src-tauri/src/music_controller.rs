@@ -60,6 +60,7 @@ impl MusicController {
         let path = Path::new(&path_str);
         let info = self.load_song(path, 0.0);
         self.play_song(&info);
+        self.emit_current_song(&path_str);
     }
 
     /// Seeks the current song to `position_secs` by restarting decoding from that position.
@@ -164,6 +165,14 @@ impl MusicController {
         }
     }
 
+    /// Emits the path of the song that is now the one actually loaded/playing,
+    /// so the frontend can update things like the currently displayed cover art.
+    pub fn emit_current_song(&self, path_str: &str) {
+        if let Err(err) = self.app_handle.emit("song-changed", path_str) {
+            eprintln!("Failed to emit current song: {}", err);
+        }
+    }
+
     pub fn emit_progress(&self) {
         let progress = PlaybackProgress {
             position: self.parameters.position_secs(),
@@ -187,6 +196,11 @@ impl MusicController {
                     player.previous_song_stack.push(player.queue.pop_front().expect("Queue should not be empty"));
                     if !player.queue.is_empty() {
                         player.start_song();
+                    } else {
+                        player.parameters.is_paused = true;
+                        player.stream = None;
+                        player.emit_playback_state();
+                        player.emit_current_song("");
                     }
                 }
             }
