@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 import { SongInfo } from "./PlayList.tsx";
 
-export default function PlayListCard({ song, onSelect }: { song: SongInfo; onSelect?: (song: SongInfo) => void }) {
+export default function PlayListCard({ song }: { song: SongInfo }) {
     const [coverUrl, setCoverUrl] = useState<string | null>(null);
 
     useEffect(() => {
@@ -20,7 +20,6 @@ export default function PlayListCard({ song, onSelect }: { song: SongInfo; onSel
 
     const loadSong = async () => {
         await invoke('load_song', { dir: song.path });
-        onSelect?.(song);
     };
 
     return (

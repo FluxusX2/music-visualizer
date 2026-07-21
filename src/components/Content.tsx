@@ -28,10 +28,12 @@ mat2 rotate(float a) {
 }
 
 void main() {
-    // Centered, aspect-corrected coordinates in [-1, 1] range for the shorter axis.
     vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution) / min(u_resolution.x, u_resolution.y);
     float r = length(uv);
     float theta = atan(uv.y, uv.x);
+    
+    // Automatically calculate the width of a single pixel for perfect smoothing
+    float fw = fwidth(r); 
 
     const float labelRadius = 0.4;
     const float spindleRadius = 0.035;
@@ -39,37 +41,51 @@ void main() {
     vec3 vinylDark = vec3(0.03, 0.03, 0.035);
     vec3 vinylLight = vec3(0.09, 0.09, 0.1);
 
-    // Concentric grooves on the black part of the record.
-    float groove = 0.5 + 0.5 * sin(r * 140.0);
-    vec3 color = mix(vinylDark, vinylLight, groove * 0.6);
-
-    // Static anisotropic reflection (classic vinyl bow-tie sheen).
-    // Multiplying theta by 2.0 creates two opposite stationary light streaks, independent of u_angle.
+    // Grooves
+    float rawGroove = 0.5 + 0.5 * sin(r * 400.0);
+    float groove = pow(rawGroove, 4.0);
+    
+    vec3 color = mix(vinylDark, vinylLight, groove * 0.8);
+    // Sheen
     float sheen = pow(max(0.0, sin(theta * 2.0 - 1.0)), 8.0) * 0.25;
     color += sheen;
 
+    // Label area
     if (r < labelRadius) {
-        // Rotate the sampling coordinates so the cover art spins with the record.
         vec2 labelUv = rotate(-u_angle) * uv;
         vec2 texUv = (labelUv / labelRadius) * 0.5 + 0.5;
-        texUv.y = 1.0 - texUv.y;
+        
+        // REMOVED: texUv.y = 1.0 - texUv.y;
 
+        vec3 labelColor;
         if (u_hasCover > 0.5) {
-            color = texture(u_cover, texUv).rgb;
+            labelColor = texture(u_cover, texUv).rgb;
         } else {
-            color = vec3(0.55, 0.55, 0.58);
+            labelColor = vec3(0.55, 0.55, 0.58);
         }
 
-        // Subtle ring around the label edge.
-        float edge = smoothstep(labelRadius, labelRadius - 0.015, r);
-        color = mix(vec3(0.0), color, edge);
+        // Crisp, 1-pixel anti-aliased edge for the label
+        float labelEdge = smoothstep(labelRadius - fw, labelRadius, r);
+        color = mix(labelColor, color, labelEdge);
+        
+        // FIXED: Subtle dark ring ONLY on the outer edge of the label
+        float ring = smoothstep(labelRadius - 0.015, labelRadius, r);
+        
+        // Darkens the very edge slightly, leaving the center at full brightness
+        color = mix(color, vec3(0.0), ring * 0.4); 
     }
 
+    // Spindle hole
     if (r < spindleRadius) {
-        color = vinylDark * 0.5;
+        // Crisp edge for the center hole
+        float spindleEdge = smoothstep(spindleRadius - fw, spindleRadius, r);
+        color = mix(vinylDark * 0.2, color, spindleEdge);
     }
 
-    float alpha = smoothstep(1.0, 0.97, r);
+    // Outer edge of the vinyl
+    // Uses fw * 1.5 for a tiny bit of extra smoothness on the absolute outer edge
+    float alpha = 1.0 - smoothstep(1.0 - (fw * 1.5), 1.0, r); 
+    
     outColor = vec4(color, alpha);
 }`;
 
@@ -147,7 +163,11 @@ export default function Content({ song }: { song?: SongInfo | null }) {
 
         const resizeObserver = new ResizeObserver(() => {
             const { clientWidth, clientHeight } = canvas;
-            const dpr = window.devicePixelRatio || 1;
+
+            const RESOLUTION_MULTIPLIER = 2.0;
+
+            const dpr = (window.devicePixelRatio || 1) * RESOLUTION_MULTIPLIER;
+
             canvas.width = Math.max(1, Math.round(clientWidth * dpr));
             canvas.height = Math.max(1, Math.round(clientHeight * dpr));
             gl.viewport(0, 0, canvas.width, canvas.height);

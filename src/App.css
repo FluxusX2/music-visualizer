@@ -96,7 +96,7 @@ button {
   background: var(--color-bg-elevated-1);
   border-radius: 16px;
   padding: 8px;
-  overflow: scroll;
+  overflow-y: auto;
 }
 
 .playlist button {
